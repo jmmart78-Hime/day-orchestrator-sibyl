@@ -1,0 +1,8 @@
+{
+  "name": "Day Orchestrator - Sibyl",
+  "description": "An autonomous AI day-management system that continuously plans, prepares, adapts to incoming changes, captures commitments, and replans your schedule.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
