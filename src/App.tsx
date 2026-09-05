@@ -1028,11 +1028,20 @@ export default function App() {
               result.newPrepItem.sourceDoc || 'Sibyl Persistent Memory (workload_patterns)',
             timestamp: '8:00 AM',
           };
-          setPrepItems((prev) => [newPrep, ...prev]);
+          // Filter out any prior Sibyl-generated prep items before adding the fresh one
+          setPrepItems((prev) => [
+            newPrep,
+            ...prev.filter(
+              (p) =>
+                !p.id.startsWith('prep-sibyl') &&
+                !p.title.includes('60m Buffer') &&
+                !p.tags?.includes('Sibyl Memory')
+            ),
+          ]);
         }
 
         const newLog: ActivityLogEntry = {
-          id: `log-fresh-b-${Date.now()}`,
+          id: `log-fresh-b-sibyl-active`,
           timestamp: '8:00 AM',
           phase: 'PLAN',
           title: 'Fresh Session B Planned: Sibyl Memory Enforced 60m Prep Buffer',
@@ -1046,7 +1055,15 @@ export default function App() {
           impactTag: 'Sibyl Adapted',
           isNew: true,
         };
-        setActivityLogs((prev) => [newLog, ...prev]);
+        // Idempotent comparison logging: Replace prior Sibyl-enforced entry, preserve baseline entry
+        setActivityLogs((prev) => [
+          newLog,
+          ...prev.filter(
+            (log) =>
+              log.title !== 'Fresh Session B Planned: Sibyl Memory Enforced 60m Prep Buffer' &&
+              !log.id.startsWith('log-fresh-b-sibyl')
+          ),
+        ]);
 
         setNotificationBanner({
           title: 'Fresh Session B Autonomously Adapted by Sibyl Memory',
@@ -1057,8 +1074,19 @@ export default function App() {
       } else {
         // Unlearned baseline: reset to default unbuffered schedule
         setEvents(INITIAL_EVENTS);
+        // Remove all Sibyl-generated prep items and restore clean baseline prep items
+        setPrepItems((prev) => {
+          const nonSibylItems = prev.filter(
+            (p) =>
+              !p.id.startsWith('prep-sibyl') &&
+              !p.title.includes('60m Buffer') &&
+              !p.tags?.includes('Sibyl Memory')
+          );
+          return nonSibylItems.length > 0 ? nonSibylItems : INITIAL_PREP_ITEMS;
+        });
+
         const newLog: ActivityLogEntry = {
-          id: `log-fresh-b-degraded-${Date.now()}`,
+          id: `log-fresh-b-degraded-baseline`,
           timestamp: '8:00 AM',
           phase: 'PLAN',
           title: 'Fresh Session B: Unlearned Baseline Planning',
@@ -1072,7 +1100,15 @@ export default function App() {
           impactTag: 'Baseline',
           isNew: true,
         };
-        setActivityLogs((prev) => [newLog, ...prev]);
+        // Idempotent comparison logging: Replace prior baseline entry, preserve Sibyl-enforced entry
+        setActivityLogs((prev) => [
+          newLog,
+          ...prev.filter(
+            (log) =>
+              log.title !== 'Fresh Session B: Unlearned Baseline Planning' &&
+              !log.id.startsWith('log-fresh-b-degraded')
+          ),
+        ]);
 
         setNotificationBanner({
           title: 'Fresh Session B (Unlearned Baseline)',
@@ -1134,6 +1170,7 @@ export default function App() {
       setLoadBearingActive(false);
       setRecalledMemories([]);
       setEvents(INITIAL_EVENTS);
+      setPrepItems(INITIAL_PREP_ITEMS);
       setNotificationBanner({
         title: 'Sibyl SQLite Memory Cleared',
         message:
